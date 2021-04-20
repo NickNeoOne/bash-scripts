@@ -89,7 +89,10 @@ else
     echo " " >> /tmp/$LOG_FILE
     echo "VM copy completed - " $DATE $TIME  >> /tmp/$LOG_FILE
     echo " " >> /tmp/$LOG_FILE
-    echo "start VM  - " $DATE $TIME  >> /tmp/$LOG_FILE
+    # узнаем размер скопированных файлов.
+    VM_SIZE=`du -h ${DEST_DIR}${VMNAME} | awk '{ print $1}'`
+    echo "VM copy size - " $VM_SIZE  >> /tmp/$LOG_FILE
+    echo "starting VM  - " $DATE $TIME  >> /tmp/$LOG_FILE
 fi 
 
 # Запускаем VM
