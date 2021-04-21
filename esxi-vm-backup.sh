@@ -77,7 +77,7 @@ fi
 done
 
 # Запускаем копирование
-cp -r ${SOURCE_DIR}${VMNAME}/ ${DEST_DIR}
+cp -r ${SOURCE_DIR}${VMNAME}/ ${DEST_DIR} 2>> /tmp/$LOG_FILE
 
 # Проверяем статус выполнения
 STATUS=$?
@@ -96,7 +96,7 @@ else
 fi 
 
 # Запускаем VM
-vim-cmd vmsvc/power.on ${VMID}
+vim-cmd vmsvc/power.on ${VMID} 2>> /tmp/$LOG_FILE
 
 # Проверяем статус выполнения
     STATUS=$?
