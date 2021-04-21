@@ -33,12 +33,12 @@ if [ -z "$(ls -A ${DEST_DIR}${VMNAME})" ]; then
    echo "Empty dir ${DEST_DIR}${VMNAME}" >> /tmp/$LOG_FILE
    echo "do not delete old data" >> /tmp/$LOG_FILE
 else
-echo "REMOVE old VM backup" $DATE $TIME >> /tmp/$LOG_FILE
+echo "REMOVE old VM backup `date`"  >> /tmp/$LOG_FILE
 
 # Удаляем старый Бекап
 rm -rf ${DEST_DIR}${VMNAME}_OLD
 
-echo "move VM backup to OLD" $DATE $TIME >> /tmp/$LOG_FILE
+echo "move VM backup to OLD `date`"  >> /tmp/$LOG_FILE
 
 # Переименовываем текущий бекап в старый
 mv ${DEST_DIR}${VMNAME} ${DEST_DIR}${VMNAME}_OLD
@@ -46,7 +46,7 @@ mv ${DEST_DIR}${VMNAME} ${DEST_DIR}${VMNAME}_OLD
 fi
 
 echo " " >> /tmp/$LOG_FILE
-echo "Start BackUp VM" $DATE $TIME >> /tmp/$LOG_FILE
+echo "Start BackUp VM `date`"  >> /tmp/$LOG_FILE
 
 vim-cmd vmsvc/power.shutdown ${VMID}
 
@@ -71,7 +71,7 @@ if [ "$var1" == "Powered on" ]; then
  echo "WARNING: VM not stopped yet, waiting 1m " >> /tmp/$LOG_FILE
  sleep 1m
  else
- echo "VM normal stopped" $DATE $TIME >> /tmp/$LOG_FILE
+ echo "VM normal stopped `date`"  >> /tmp/$LOG_FILE
  break
 fi
 done
@@ -83,11 +83,11 @@ cp -r ${SOURCE_DIR}${VMNAME}/ ${DEST_DIR} 2>> /tmp/$LOG_FILE
 STATUS=$?
 if [[ $STATUS != 0 ]]; then
     echo " " >> /tmp/$LOG_FILE
-    echo "VM copy ERROR!!! - " $DATE $TIME  >> /tmp/$LOG_FILE
+    echo "VM copy ERROR!!! - `date`"   >> /tmp/$LOG_FILE
 else
     # Если все ОК
     echo " " >> /tmp/$LOG_FILE
-    echo "VM copy completed - " $DATE $TIME  >> /tmp/$LOG_FILE
+    echo "VM copy completed - `date`"  >> /tmp/$LOG_FILE
     echo " " >> /tmp/$LOG_FILE
     # узнаем размер скопированных файлов.
     VM_SIZE=`du -h ${DEST_DIR}${VMNAME} | awk '{ print $1}'`
@@ -102,11 +102,11 @@ vim-cmd vmsvc/power.on ${VMID} 2>> /tmp/$LOG_FILE
     STATUS=$?
 if [[ $STATUS != 0 ]]; then
      echo " " >> /tmp/$LOG_FILE
-     echo "start  VM ERROR - " $DATE $TIME  >> /tmp/$LOG_FILE
+     echo "start  VM ERROR - `date`"   >> /tmp/$LOG_FILE
 else
         # Если все ОК
      echo " " >> /tmp/$LOG_FILE
-     echo "start  VM  - " $DATE $TIME  >> /tmp/$LOG_FILE
+     echo "start  VM  - `date`"   >> /tmp/$LOG_FILE
          
 fi
 
