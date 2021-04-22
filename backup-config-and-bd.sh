@@ -5,7 +5,7 @@
 ##########################################
 
 # Данные для подключения к БД
-HOSTNAME=asr-squid01
+HOSTNAME=hostname-psql-server
 USERNAME=username
 DB_NAME=DB_name
 export PGPASSWORD="PASSWORD"
