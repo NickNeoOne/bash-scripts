@@ -61,12 +61,24 @@ echo "" >$LOGFILE
 # Запускаем backup Базы данных если в качестве параметра получили значение BD иначе бекап БД не делаем
 if [[ $1 == BD ]]; then
 
+pg_isready -h "$HOSTNAME" -U "$USERNAME" -d "$DB_NAME"
+
+STATUS=$?
+ if [[ $STATUS != 0 ]]; then
+        echo "+------------------------------------------------------------------+" >>$LOGFILE
+        echo "|  Сегодня $(date +'%R %d-%b-%Y') Произошла ошибка! Не удалось подключиться к БД.    |" >>$LOGFILE
+        echo "+------------------------------------------------------------------+" >>$LOGFILE
+ else
+        echo "+------------------------------------------------------------------+" >>$LOGFILE
+        echo "|  Сегодня $(date +'%R %d-%b-%Y') подключение к БД прошло успешно.    |" >>$LOGFILE
+#        echo "+------------------------------------------------------------------+" >>$LOGFILE
+
 pg_dump -C -h "$HOSTNAME" -U "$USERNAME" "$DB_NAME" | gzip > "$TARGET_DIR""$OUTPUT_FILE"
 #pg_dump -C -h "$HOSTNAME" -U "$USERNAME"  "$DB_NAME"   > "$TARGET_DIR""$OUTPUT_FILE".psql
 
 # Проверяем статус бекапа БД
- if [ -s "$TARGET_DIR""$OUTPUT_FILE" ]
-  then
+  if [ -s "$TARGET_DIR""$OUTPUT_FILE" ]
+   then
         echo "Файл бэкапа сохранен как \"$TARGET_DIR$OUTPUT_FILE\" с размером `ls -lh  "$TARGET_DIR""$OUTPUT_FILE" | awk '{print ($5)}'`byte" >>$LOGFILE
         echo "Бэкап БД успешно выполнен в $(date +'%R %d-%b-%Y')" >>$LOGFILE
         echo "+-------------------------------------------------------------------------------------+" >>$LOGFILE
@@ -75,6 +87,7 @@ pg_dump -C -h "$HOSTNAME" -U "$USERNAME" "$DB_NAME" | gzip > "$TARGET_DIR""$OUTP
         echo "|  Сегодня $(date +'%R %d-%b-%Y') Произошла ошибка! Бэкап БД не удался.    |" >>$LOGFILE
         echo "+------------------------------------------------------------------+" >>$LOGFILE
   fi
+ fi
 
 else
         echo "+-------------------------------------------------------------------------------------+" >>$LOGFILE
