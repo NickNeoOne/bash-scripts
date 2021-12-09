@@ -73,8 +73,10 @@ STATUS=$?
         echo "|  Сегодня $(date +'%R %d-%b-%Y') подключение к БД прошло успешно.    |" >>$LOGFILE
 #        echo "+------------------------------------------------------------------+" >>$LOGFILE
 
+set -o pipefail # тут настраиваем pipefail так чтобы выполнение конвейера завершалось с ошибкой если хоть один подкомпонентов выполннился с ошибкой
 pg_dump -C -h "$HOSTNAME" -U "$USERNAME" "$DB_NAME" | gzip > "$TARGET_DIR""$OUTPUT_FILE"
 #pg_dump -C -h "$HOSTNAME" -U "$USERNAME"  "$DB_NAME"   > "$TARGET_DIR""$OUTPUT_FILE".psql
+set +o pipefail
 
 # Проверяем статус бекапа БД
   if [ -s "$TARGET_DIR""$OUTPUT_FILE" ]
