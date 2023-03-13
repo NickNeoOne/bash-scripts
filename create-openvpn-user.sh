@@ -45,7 +45,7 @@ USERNOTIFY=$(dialog --title "Уведомления пользователя"  -
 
 
 case $USERNOTIFY in
-1) USERSENDMAIL="Нет" ;;
+1) USERSENDMAIL="Нет"; USERMAIL="не указан" ;;
 2) USERMAIL=$(dialog  --title "OpenVPN" --inputbox \
 "Укажите Email пользователя " 0 0 3>&1 1>&2 2>&3 3>&- ); USERSENDMAIL="Да";;
 esac
@@ -54,8 +54,6 @@ if [ -z "$USERMAIL" -a $USERNOTIFY == 2  ] ; then
   clear
   echo -e "\n\033[31m Ошибка!!!\n\033[0m Выбран пункт \"уведомить пользователя\", но не задан E-mail."
  exit
-else
-USERMAIL="не указан"
 fi
 
 dialog  --title "OpenVPN" --yesno "Проверка данных!
