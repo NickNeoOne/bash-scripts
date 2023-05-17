@@ -7,7 +7,8 @@
 # установка необходимых пакетов
 apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
 
-
+if grep -q "nickneo" ~/.bashrc; then
+    echo "make changes to the file ~/.bashrc"
 # Включение возможности перемещаться по истории команд используя частично набранную команду
 cat >> ~/.bashrc <<EOF 
 # add nickneo alias and settings
@@ -28,3 +29,7 @@ EOF
 
 # Применение изменений в .bashrc
 source ~/.bashrc
+else
+    echo "file ~/.bashrc has not been changed because the settings already exist"
+    echo "файл ~/.bashrc не был изменен так как настройки уже существуют"
+fi
