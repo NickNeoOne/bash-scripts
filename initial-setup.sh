@@ -18,6 +18,7 @@ cat >> ~/.inputrc <<EOF
 "\e[B": history-search-forward
 EOF
 else
+    echo ""
     echo "#######################################################"
     echo "file ~/.inputrc has not been changed because the settings already exist"
     echo "файл ~/.inputrc не был изменен так как настройки уже существуют"
@@ -36,6 +37,7 @@ alias systemctl-active='systemctl  --type=service --state=active' # Список
 EOF
 source ~/.bashrc
 else
+    echo ""
     echo "#######################################################"
     echo "file ~/.bashrc has not been changed because the settings already exist"
     echo "файл ~/.bashrc не был изменен так как настройки уже существуют"
