@@ -9,10 +9,6 @@ apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap
 
 # Применение изменений в .bashrc
 if grep -q "nickneo" ~/.bashrc; then
-    echo "file ~/.bashrc has not been changed because the settings already exist"
-    echo "файл ~/.bashrc не был изменен так как настройки уже существуют"
-source ~/.bashrc
-else
     echo "make changes to the file ~/.bashrc"
 # Включение возможности перемещаться по истории команд используя частично набранную команду
 cat >> ~/.bashrc <<EOF 
@@ -31,5 +27,9 @@ alias systemctl-running='systemctl --type=service --state=running' # Списо�
 alias systemctl-failed='systemctl --type=service --state failed' # Список служб со статусом failed
 alias systemctl-active='systemctl  --type=service --state=active' # Список активных служб
 EOF
+source ~/.bashrc
+else
 
+    echo "file ~/.bashrc has not been changed because the settings already exist"
+    echo "файл ~/.bashrc не был изменен так как настройки уже существуют"
 fi
