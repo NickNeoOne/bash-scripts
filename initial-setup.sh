@@ -1,6 +1,9 @@
 #!/bin/bash
 # ссылка на github https://github.com/NickNeoOne/bash-scripts
-# 
+# для выполнения запустить команду: curl -fsSL https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh | bash
+
+
+
 # установка необходимых пакетов
 apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
 
