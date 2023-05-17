@@ -8,10 +8,11 @@
 apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
 
 # Применение изменений в .bashrc
-if grep -q "nickneo" ~/.bashrc; then
+grep -q "nickneo" ~/.bashrc
+if [[ $? != 0 ]]; then
     echo "make changes to the file ~/.bashrc"
 # Включение возможности перемещаться по истории команд используя частично набранную команду
-cat >> ~/.bashrc <<EOF 
+cat >> ~/.bashrc <<EOF
 # add nickneo alias and settings
 if [[ $- == *i* ]]
 then
@@ -21,7 +22,7 @@ fi
 EOF
 #
 # добавление алиасов
-cat >> ~/.bashrc <<EOF 
+cat >> ~/.bashrc <<EOF
 alias grep-v="grep -Ev '^\s*(;|#|$)'" # Вывод файла без комментариев и пустых строк
 alias systemctl-running='systemctl --type=service --state=running' # Список запущенных служб
 alias systemctl-failed='systemctl --type=service --state failed' # Список служб со статусом failed
