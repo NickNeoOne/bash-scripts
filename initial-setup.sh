@@ -7,22 +7,28 @@
 # установка необходимых пакетов
 apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
 
-# Применение изменений в .bashrc
+# Применение изменений в ~/.inputrc
+grep -q "nickneo" ~/.inputrc
+if [[ $? != 0 ]]; then
+    echo "make changes to the file ~/.inputrc"
+# Включение возможности перемещаться по истории команд используя частично набранную команду
+cat >> ~/.inputrc <<EOF
+# add nickneo settings
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+EOF
+else
+    echo "#######################################################"
+    echo "file ~/.inputrc has not been changed because the settings already exist"
+    echo "файл ~/.inputrc не был изменен так как настройки уже существуют"
+fi
+
 grep -q "nickneo" ~/.bashrc
 if [[ $? != 0 ]]; then
     echo "make changes to the file ~/.bashrc"
-# Включение возможности перемещаться по истории команд используя частично набранную команду
-cat >> ~/.bashrc <<EOF
-# add nickneo alias and settings
-if [[ $- == *i* ]]
-then
-    bind '"\e[A": history-search-backward'
-    bind '"\e[B": history-search-forward'
-fi
-EOF
-#
 # добавление алиасов
 cat >> ~/.bashrc <<EOF
+# add nickneo alias
 alias grep-v="grep -Ev '^\s*(;|#|$)'" # Вывод файла без комментариев и пустых строк
 alias systemctl-running='systemctl --type=service --state=running' # Список запущенных служб
 alias systemctl-failed='systemctl --type=service --state failed' # Список служб со статусом failed
@@ -30,7 +36,7 @@ alias systemctl-active='systemctl  --type=service --state=active' # Список
 EOF
 source ~/.bashrc
 else
-
+    echo "#######################################################"
     echo "file ~/.bashrc has not been changed because the settings already exist"
     echo "файл ~/.bashrc не был изменен так как настройки уже существуют"
 fi
