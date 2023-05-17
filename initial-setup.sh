@@ -19,7 +19,7 @@ EOF
 #
 # добавление алиасов
 cat >> ~/.bashrc <<EOF 
-alias grep-v="grep -Ev '^\s*(;|#|$)'"
+alias grep-v="grep -Ev '^\s*(;|#|$)'" # Вывод файла без комментариев и пустых строк
 alias systemctl-running='systemctl --type=service --state=running' # Список запущенных служб
 alias systemctl-failed='systemctl --type=service --state failed' # Список служб со статусом failed
 alias systemctl-active='systemctl  --type=service --state=active' # Список активных служб
