@@ -10,6 +10,7 @@ apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap
 
 # Включение возможности перемещаться по истории команд используя частично набранную команду
 cat >> ~/.bashrc <<EOF 
+# add nickneo alias and settings
 if [[ $- == *i* ]]
 then
     bind '"\e[A": history-search-backward'
