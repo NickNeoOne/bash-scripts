@@ -1,6 +1,9 @@
 #!/bin/bash
 # ссылка на github https://github.com/NickNeoOne/bash-scripts
-# для выполнения запустить команду: curl -fsSL https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh | bash
+# для выполнения запустить команду: 
+# curl -fsSL https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh | bash
+# или
+# wget --no-cache -qO - https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh | sh
 
 
 
