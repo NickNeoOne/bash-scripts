@@ -8,10 +8,10 @@
 
 
 # установка необходимых пакетов
-apt update && apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
-
+sudo apt update && sudo apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
+USER=`whoami`
 # Применение изменений в ~/.inputrc
-grep -q "nickneo" ~/.inputrc
+grep -q "$USER" ~/.inputrc
 if [[ $? != 0 ]]; then
     echo "make changes to the file ~/.inputrc"
 # Включение возможности перемещаться по истории команд используя частично набранную команду
@@ -27,7 +27,7 @@ else
     echo "файл ~/.inputrc не был изменен так как настройки уже существуют"
 fi
 
-grep -q "nickneo" ~/.bashrc
+grep -q "$USER" ~/.bashrc
 if [[ $? != 0 ]]; then
     echo "make changes to the file ~/.bashrc"
 # добавление алиасов
