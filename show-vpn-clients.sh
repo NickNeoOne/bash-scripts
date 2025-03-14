@@ -1,7 +1,7 @@
 #!/bin/bash
 # ссылка на github https://github.com/NickNeoOne/bash-scripts
 echo ""
-echo "================================================ Show client connected to sstp ================================================="
+echo "================================================ Show client connected to accel-ppp ============================================"
 accel-cmd show sessions username,state,calling-sid,ip,uptime-raw,rx-bytes,tx-bytes
 echo "================================================================================================================================"
 echo ""
