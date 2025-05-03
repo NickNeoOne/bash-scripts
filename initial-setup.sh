@@ -42,7 +42,7 @@ fi
 
 
 # установка необходимых пакетов
-sudo apt update && sudo apt install -y apt-transport-https lsb-release dialog wget mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
+sudo apt update && sudo apt install -y apt-transport-https lsb-release dialog wget curl mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
 
 # Применение изменений в ~/.inputrc
 grep -q "$CUR_USER" /home/$CUR_USER/.inputrc
