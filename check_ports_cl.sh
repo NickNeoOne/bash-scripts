@@ -101,7 +101,7 @@ for i in "${!hosts[@]}"; do
 done
 
 echo "# Отчет проверки сети"
-echo "**Время проверки:** $(date '+%Y-%m-%d %H:%M:%S') from ${cur_host}"
+echo "Время проверки: $(date '+%Y-%m-%d %H:%M:%S') from **${cur_host}**"
 echo ""
 
 printf "| %-14s |" "Проверка      "
