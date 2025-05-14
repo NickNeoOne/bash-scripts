@@ -1,48 +1,171 @@
 #!/bin/bash
 # ссылка на github https://github.com/NickNeoOne/bash-scripts
 # для выполнения запустить команду:
-# curl -fsSL https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh -o /tmp/initial-setup.sh ; bash /tmp/initial-setup.sh
+# curl -fsSL https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh | bash
 # или
-# wget --no-cache -qO - https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh -O /tmp/initial-setup.sh ; bash /tmp/initial-setup.sh
+# wget --no-cache -qO - https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh | bash
 
 
-
+# Задаем локаль
 CUR_LOCALE=ru_RU.UTF-8
+# Список пакетов для установки
+INSTALL_PKG="apt-transport-https lsb-release dialog wget curl mc nmap 
+traceroute dnsutils ncat telnet mtr-tiny tcpdump 
+htop"
 
-echo "ВВедите имя пользователя/Type your username, please:"
+
+
+
+# Цвета для вывода
+declare -r RED='\033[0;31m'
+declare -r GREEN='\033[0;32m'
+declare -r YELLOW='\033[0;33m'
+declare -r BLUE='\033[0;34m'
+declare -r NC='\033[0m' # No Color
+
+# Функция для установки sudo
+install_sudo() {
+    # Определяем пакетный менеджер
+    if command -v apt &>/dev/null; then
+        su -c "apt update && apt install sudo"
+    elif command -v yum &>/dev/null; then
+        su -c "yum install -y sudo"
+    elif command -v dnf &>/dev/null; then
+        su -c "dnf install -y sudo"
+    else
+        echo "Ошибка: Не удалось определить пакетный менеджер!" >&2
+        echo "Установите sudo вручную и повторите попытку." >&2
+        exit 1
+    fi
+
+    # Проверяем успешность установки
+    if ! command -v sudo &>/dev/null; then
+        echo "Ошибка: Не удалось установить sudo!" >&2
+        exit 1
+    fi
+}
+
+# Проверяем наличие sudo в системе
+if ! command -v sudo &>/dev/null; then
+    echo "sudo не установлен в системе."
+    
+    if [[ $EUID -eq 0 ]]; then
+        echo "Пытаемся установить sudo..."
+        install_sudo
+        echo "sudo ${GREEN}успешно${NC} установлен!"
+    else
+        echo "Для установки sudo войдите как root и запустите скрипт снова." >&2
+        exit 1
+    fi
+fi
+
+echo "Введите имя пользователя/Type your username, please:"
 read CUR_USER
-echo "You just typed: $CUR_USER"
-id $CUR_USER
-if [[ $? != 0 ]]; then
-echo "Нет, такого пользователя"
-exit 1
+
+if [[ -z "$CUR_USER" ]]; then
+    echo -e "${RED}Ошибка: Имя пользователя не может быть пустым!${NC}" >&2
+    exit 1
+fi
+# Дополнительная проверка для системных имен
+if [[ ! "$CUR_USER" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_-]{0,31}$ ]]; then
+    echo -e "${RED}Недопустимое имя для системного пользователя!${NC}" >&2
+    echo -e "${YELLOW}Можно использовать: латинские буквы, цифры, дефисы и подчеркивания.${NC}" >&2
+    echo -e "${YELLOW}Длина: 1-32 символа, начинаться с буквы или цифры.${NC}" >&2
+    exit 1
 fi
 
 
-dpkg -s sudo > /dev/null 2>&1
+# Проверяем существование пользователя
+id "$CUR_USER" &>/dev/null
+
 if [[ $? != 0 ]]; then
-echo "Не установлен пакет sudo. Устанoвка"
-su -c "apt update && apt install sudo && usermod -a -G sudo $CUR_USER"
-su -c "usermod -a -G sudo $CUR_USER"
+    echo "Нет, такого пользователя"
+    read -p "Хотите создать пользователя $CUR_USER? [Y/n] " answer
+    
+    case $answer in
+        [Yy]* )
+            # Проверка прав администратора
+            if [[ $EUID -ne 0 ]]; then
+                echo -e "${YELLOW}Ошибка:${NC} Для создания пользователя требуются права ${RED}root${NC}! пробуем запусть команду с sudo" >&2
+							if sudo adduser  "$CUR_USER"; then
+								echo "Пользователь $CUR_USER ${GREEN}успешно${NC} создан!"
+							else
+								echo -e "${RED}Ошибка${NC} при создании пользователя! ${RED}Недостаточно прав!${NC} Выход." >&2
+								exit 1
+							fi
+			else
+				if adduser  "$CUR_USER"; then
+					echo "Пользователь $CUR_USER ${GREEN}успешно${NC} создан!"
+				else
+					echo -e "${RED}Ошибка${NC} при создании пользователя! Выход." >&2
+					exit 1
+				fi
+            fi
+            ;;
+        * )
+            echo "Создание пользователя отменено. Выход." >&2
+            exit 1
+            ;;
+    esac
+else
+	echo "Пользователь $CUR_USER ${GREEN}существует${NC}. Продолжаем работу..."
 fi
+
+# Проверяем пользователя на присутствие в группе sudo
+EUGS=`getent group sudo | grep $CUR_USER`
+
+if [[ -z "$EUGS" ]]; then
+	echo "Пользователя нет группе sudo" >&2
+		read -p "Хотите добавить пользователя $CUR_USER? в группу sudo [Y/n] " answer
+
+	case $answer in
+		[Yy]* )
+			# Проверка прав администратора
+			if [[ $EUID -ne 0 ]]; then
+				echo -e "${YELLOW}Ошибка:${NC} Для добавления пользователя в группу требуются права ${RED}root${NC}! пробуем запусть команду с sudo" >&2
+				if sudo usermod -a -G sudo "$CUR_USER"; then
+					echo "Пользователь $CUR_USER добавлен в группу sudo!"
+				else
+					echo -e "${RED}Ошибка${NC} при добавлении пользователя группу sudo!"
+					exit 1
+				fi
+			else
+				if usermod -a -G sudo "$CUR_USER"; then
+					echo "Пользователь ${GREEN}успешно${NC} $CUR_USER добавлен в группу sudo!"
+				else
+					echo -e "${RED}Ошибка${NC} при добавлении пользователя группу sudo!" >&2
+					exit 1
+				fi
+			fi
+			;;
+		* )
+			echo "Добавление пользователя в группу sudo отменено. Продолжаем работу..." >&2
+			;;
+	esac
+fi
+
+
+# Здесь продолжение вашего скрипта
+
+
 
 #echo $CUR_LOCALE
 
 if [[ $LANG != $CUR_LOCALE  ]]; then
-echo "Текущая локаль в системе $LANG не совпадает с  заданной переменной пользователем в скрипте: $CUR_LOCALE, запускаем настройку локали"
-echo "The current locale in the system $LANG does not match the variable specified by the user in the script: $CUR_LOCALE, starting the locale setup"
-#sleep 2
-echo "Press any key to continue"
+	echo "Текущая локаль в системе $LANG не совпадает с  заданной переменной пользователем в скрипте: $CUR_LOCALE, запускаем настройку локали"
+	echo "The current locale in the system $LANG does not match the variable specified by the user in the script: $CUR_LOCALE, starting the locale setup"
+	#sleep 2
+	echo "Press any key to continue"
 
-read -s -n 1
-sudo dpkg-reconfigure locales
+	read -s -n 1
+	sudo dpkg-reconfigure locales
 else
-echo "Текущая локаль в системе $LANG аналогична заданной переменной пользователем в скрипте: $CUR_LOCALE, Перенастройка локали не требуется"
+	echo "Текущая локаль в системе $LANG аналогична заданной переменной пользователем в скрипте: $CUR_LOCALE, Перенастройка локали не требуется"
 fi
 
 
 # установка необходимых пакетов
-sudo apt update && sudo apt install -y apt-transport-https lsb-release dialog wget curl mc nmap traceroute dnsutils ncat telnet mtr-tiny tcpdump htop
+sudo apt update && sudo apt install -y $INSTALL_PKG
 
 # Применение изменений в ~/.inputrc
 grep -q "$CUR_USER" /home/$CUR_USER/.inputrc
