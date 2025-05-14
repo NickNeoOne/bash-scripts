@@ -6,7 +6,6 @@
 # wget --no-cache -qO - https://raw.githubusercontent.com/NickNeoOne/bash-scripts/main/initial-setup.sh -O /tmp/initial-setup.sh ; bash /tmp/initial-setup.sh
 
 
-
 # Задаем локаль
 CUR_LOCALE=ru_RU.UTF-8
 # Список пакетов для установки
@@ -53,7 +52,7 @@ if ! command -v sudo &>/dev/null; then
     if [[ $EUID -eq 0 ]]; then
         echo "Пытаемся установить sudo..."
         install_sudo
-        echo "sudo ${GREEN}успешно${NC} установлен!"
+        echo -e "sudo ${GREEN}успешно${NC} установлен!"
     else
         echo "Для установки sudo войдите как root и запустите скрипт снова." >&2
         exit 1
@@ -88,15 +87,17 @@ if [[ $? != 0 ]]; then
             # Проверка прав администратора
             if [[ $EUID -ne 0 ]]; then
                 echo -e "${YELLOW}Ошибка:${NC} Для создания пользователя требуются права ${RED}root${NC}! пробуем запусть команду с sudo" >&2
+#                echo "Запустите скрипт снова с sudo: sudo $0" >&2
 							if sudo adduser  "$CUR_USER"; then
-								echo "Пользователь $CUR_USER ${GREEN}успешно${NC} создан!"
+								echo -e "Пользователь $CUR_USER ${GREEN}успешно${NC} создан!"
 							else
 								echo -e "${RED}Ошибка${NC} при создании пользователя! ${RED}Недостаточно прав!${NC} Выход." >&2
 								exit 1
 							fi
 			else
 				if adduser  "$CUR_USER"; then
-					echo "Пользователь $CUR_USER ${GREEN}успешно${NC} создан!"
+					echo -e "Пользователь $CUR_USER ${GREEN}успешно${NC} создан!"
+#	                echo "Пароль можно задать командой: sudo passwd $CUR_USER"
 				else
 					echo -e "${RED}Ошибка${NC} при создании пользователя! Выход." >&2
 					exit 1
@@ -109,7 +110,7 @@ if [[ $? != 0 ]]; then
             ;;
     esac
 else
-	echo "Пользователь $CUR_USER ${GREEN}существует${NC}. Продолжаем работу..."
+	echo -e "Пользователь $CUR_USER ${GREEN}существует${NC}. Продолжаем работу..."
 fi
 
 # Проверяем пользователя на присутствие в группе sudo
@@ -125,14 +126,14 @@ if [[ -z "$EUGS" ]]; then
 			if [[ $EUID -ne 0 ]]; then
 				echo -e "${YELLOW}Ошибка:${NC} Для добавления пользователя в группу требуются права ${RED}root${NC}! пробуем запусть команду с sudo" >&2
 				if sudo usermod -a -G sudo "$CUR_USER"; then
-					echo "Пользователь $CUR_USER добавлен в группу sudo!"
+					echo -e "Пользователь ${GREEN}успешно${NC} добавлен в группу sudo!"
 				else
 					echo -e "${RED}Ошибка${NC} при добавлении пользователя группу sudo!"
 					exit 1
 				fi
 			else
 				if usermod -a -G sudo "$CUR_USER"; then
-					echo "Пользователь ${GREEN}успешно${NC} $CUR_USER добавлен в группу sudo!"
+					echo -e "Пользователь ${GREEN}успешно${NC} $CUR_USER добавлен в группу sudo!"
 				else
 					echo -e "${RED}Ошибка${NC} при добавлении пользователя группу sudo!" >&2
 					exit 1
