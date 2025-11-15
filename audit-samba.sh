@@ -1,5 +1,5 @@
 #!/bin/bash
-# audit-samba.sh — ОПТИМИЗИРОВАННАЯ ВЕРСИЯ БЕЗ TEMP-ФАЙЛОВ
+# audit-samba.sh — ОПТИМИЗИРОВАННАЯ ВЕРСИЯ С ДИНАМИЧЕСКОЙ ПОДСЕТЬЮ
 
 # Проверяет ТОЛЬКО АКТИВНЫЕ строки
 set -euo pipefail
@@ -29,12 +29,26 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# === ОПРЕДЕЛЕНИЕ ПОДСЕТИ ДЛЯ hosts allow ===
+# Ищем подсеть в таблице маршрутизации, исключая loopback и default-маршрут.
+NETWORK_CIDR=$(ip route | awk '/dev/ && !/default/ && !/127.0.0.0/ {print $1; exit}' 2>/dev/null)
+
+# Санитарная проверка и установка окончательной строки рекомендаций.
+if [[ -z "$NETWORK_CIDR" || "$NETWORK_CIDR" =~ ^(0\.0\.0\.0) ]]; then
+    # Если подсеть не определена, используем безопасное значение по умолчанию.
+    HOSTS_ALLOW_REC="192.168.1.0/24 127.0.0.1 # Внимание: использована подсеть по умолчанию, проверьте!"
+else
+    HOSTS_ALLOW_REC="$NETWORK_CIDR 127.0.0.1"
+fi
+# ============================================
+
 # === Отчёт ===
 : > "$REPORT"
 log "=== АУДИТ БЕЗОПАСНОСТИ SAMBA ==="
 log "Дата: $(date)"
 log "Хост: $(hostname)"
 log "ОС: $(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d'"' -f2 || echo 'Unknown')"
+log "Локальная подсеть: $NETWORK_CIDR"
 log ""
 
 # === 1. Версия Samba ===
@@ -77,10 +91,6 @@ if [ ! -f "$CONFIG" ]; then
     warn "Конфиг не найден"
 else
     # === ОДНОКРАТНАЯ ОБРАБОТКА КОНФИГА ===
-    # 1. Удаляем комментарии в конце строки: ; ... или # ...
-    # 2. Удаляем строки, начинающиеся с ; или # (с пробелами)
-    # 3. Удаляем пустые строки
-    # 4. Приводим к нижнему регистру
     CFG=$(sed -e 's/[ \t]*[;#].*//' -e '/^[ \t]*[;#]/d' -e '/^\s*$/d' "$CONFIG" | tr '[:upper:]' '[:lower:]')
 
     # === Проверки (используем grep на переменную $CFG) ===
@@ -159,14 +169,14 @@ fi
 
 # === 7. Рекомендации ===
 title "7. РЕКОМЕНДАЦИИ"
-cat << 'EOF' | tee -a "$REPORT"
+cat << EOF | tee -a "$REPORT"
 
 # В [global] добавьте/проверьте:
 server min protocol = SMB2_10
 disable netbios = yes
 smb encrypt = required
 ntlm auth = ntlmv2-only
-hosts allow = 192.168.1.0/24 127.0.0.1
+hosts allow = $HOSTS_ALLOW_REC
 
 # Убедитесь, что НЕТ активных:
 ; guest ok = yes
