@@ -1,5 +1,5 @@
 #!/bin/bash
-# audit-samba.sh — ОПТИМИЗИРОВАННАЯ ВЕРСИЯ С ДИНАМИЧЕСКОЙ ПОДСЕТЬЮ
+# audit-samba.sh — ОПТИМИЗИРОВАННАЯ ВЕРСИЯ С ОПЦИОНАЛЬНОЙ ПРОВЕРКОЙ УЯЗВИМОСТЕЙ
 
 # Проверяет ТОЛЬКО АКТИВНЫЕ строки
 set -euo pipefail
@@ -16,6 +16,9 @@ CONFIG="/etc/samba/smb.conf"
 LOG_DIR="/var/log/samba"
 REPORT="/tmp/samba-audit-report-$(date +%Y%m%d-%H%M%S).txt"
 
+# === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
+RUN_VULN_SCAN=0 # По умолчанию сканирование уязвимостей отключено
+
 # === Функции ===
 log() { echo -e "$1" | tee -a "$REPORT"; }
 title() { log "${BLUE}=== $1 ===${NC}"; }
@@ -29,13 +32,31 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# === ОБРАБОТКА АРГУМЕНТОВ ===
+for arg in "$@"; do
+    case "$arg" in
+        -v|--vuln|--vulnerabilities)
+            RUN_VULN_SCAN=1
+            log "ВНИМАНИЕ: Активировано сканирование уязвимостей (nmap smb-vuln-*)"
+            ;;
+        -h|--help)
+            echo "Использование: sudo $0 [-v|--vuln]"
+            echo "-v или --vuln: Активирует сканирование известных уязвимостей Samba/SMB через Nmap."
+            exit 0
+            ;;
+        *)
+            crit "Неизвестный аргумент: $arg. Используйте -h для справки."
+            exit 1
+            ;;
+    esac
+done
+
 # === ОПРЕДЕЛЕНИЕ ПОДСЕТИ ДЛЯ hosts allow ===
-# Ищем подсеть в таблице маршрутизации, исключая loopback и default-маршрут.
+# Ищем подсеть в таблице маршрутизации.
 NETWORK_CIDR=$(ip route | awk '/dev/ && !/default/ && !/127.0.0.0/ {print $1; exit}' 2>/dev/null)
 
-# Санитарная проверка и установка окончательной строки рекомендаций.
 if [[ -z "$NETWORK_CIDR" || "$NETWORK_CIDR" =~ ^(0\.0\.0\.0) ]]; then
-    # Если подсеть не определена, используем безопасное значение по умолчанию.
+    NETWORK_CIDR="192.168.1.0/24"
     HOSTS_ALLOW_REC="192.168.1.0/24 127.0.0.1 # Внимание: использована подсеть по умолчанию, проверьте!"
 else
     HOSTS_ALLOW_REC="$NETWORK_CIDR 127.0.0.1"
@@ -51,12 +72,12 @@ log "ОС: $(lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | c
 log "Локальная подсеть: $NETWORK_CIDR"
 log ""
 
+# ---
 # === 1. Версия Samba ===
 title "1. ВЕРСИЯ SAMBA"
 if command -v smbd >/dev/null 2>&1; then
     VERSION=$(smbd --version 2>/dev/null | head -1)
     log "Версия: $VERSION"
-    # Проверка на современные ветки (4.14+ как минимум)
     if echo "$VERSION" | grep -qE "Version 4\.(1[4-9]|[2-9][0-9])"; then
         ok "Версия актуальна (4.14+)"
     else
@@ -66,6 +87,7 @@ else
     warn "smbd не найден"
 fi
 
+# ---
 # === 2. Службы ===
 title "2. СЛУЖБЫ"
 for svc in smbd nmbd winbind; do
@@ -80,11 +102,13 @@ for svc in smbd nmbd winbind; do
     fi
 done
 
+# ---
 # === 3. Порты ===
 title "3. ПОРТЫ"
 PORTS=$(ss -tuln | awk '$5 ~ /:137|:139|:445/ {print $5}' 2>/dev/null || true)
 [ -z "$PORTS" ] && ok "Порты 137,139,445 закрыты" || { log "Открыты:\n$PORTS"; crit "Ограничьте firewall!"; }
 
+# ---
 # === 4. АНАЛИЗ smb.conf (ОДИН ПРОХОД) ===
 title "4. АНАЛИЗ $CONFIG"
 if [ ! -f "$CONFIG" ]; then
@@ -146,6 +170,7 @@ else
     fi
 fi
 
+# ---
 # === 5. Логи ===
 title "5. ЛОГИ"
 if [ -d "$LOG_DIR" ] && ls "$LOG_DIR"/log.* 1>/dev/null 2>&1; then
@@ -155,18 +180,24 @@ else
     warn "Логи не найдены"
 fi
 
-
+# ---
 # === 6. Уязвимости (nmap) ===
 title "6. УЯЗВИМОСТИ"
-if command -v nmap >/dev/null 2>&1 && ss -tuln | grep -q ":445"; then
-    IP=$(hostname -I | awk '{print $1}')
-    VULNS=$(nmap -p445 --script "smb-vuln-*" "$IP" 2>/dev/null | grep -i "VULNERABLE" || true)
-    [ -z "$VULNS" ] && ok "Уязвимостей не найдено" || crit "ОБНАРУЖЕНЫ:\n$VULNS"
+
+if [ "$RUN_VULN_SCAN" -eq 1 ]; then
+    if command -v nmap >/dev/null 2>&1 && ss -tuln | grep -q ":445"; then
+        IP=$(hostname -I | awk '{print $1}')
+        VULNS=$(nmap -p445 --script "smb-vuln-*" "$IP" 2>/dev/null | grep -i "VULNERABLE" || true)
+        [ -z "$VULNS" ] && ok "Уязвимостей не найдено" || crit "ОБНАРУЖЕНЫ:\n$VULNS"
+    else
+        ss -tuln | grep -q ":445" || ok "Порт 445 закрыт"
+        command -v nmap >/dev/null || warn "nmap не установлен"
+    fi
 else
-    ss -tuln | grep -q ":445" || ok "Порт 445 закрыт"
-    command -v nmap >/dev/null || warn "nmap не установлен"
+    warn "Проверка на уязвимости пропущена (используйте ключ -v)"
 fi
 
+# ---
 # === 7. Рекомендации ===
 title "7. РЕКОМЕНДАЦИИ"
 cat << EOF | tee -a "$REPORT"
